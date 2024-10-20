@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        html, body {
+            height: 100%;
+            width: 100%;
+        }
+        .message-box {
+            width: 20rem;
+            height: 75vh;
+            border: 4px solid black;
+            border-radius: 15px;
+            position: relative;
+        }
+        .messages {
+            height: 80vh;
+            overflow-y: scroll;
+        }
+        .message {
+            background-color: #f1f1f1;
+            padding: 10px;
+            margin: 5px;
+            border-radius: 10px;
+            width: fit-content;
+        }
+        .outgoing-message {
+            margin-left: auto;
+        }
+        .bottom {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            background-color: #f1f1f1;
+        }
+        .bottom input {
+            border-radius: 5px;
+            padding: 5px 20px;
+            border: 1px solid black;
+            flex-grow: 1;
+            margin-right: 10px;
+        }
+        .bottom button {
+            border-radius: 5px;
+            padding: 5px 10px;
+            border: 1px solid #f1f1f1;
+            background-color: #408500;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+    <main class="flex flex-col items-center justify-center h-screen">
+        <h1 class="text-4xl mb-3 font-bold">iChat</h1>
+        <div class="relative message-box rounded-md flex flex-col">
+            <div class="messages"></div>
+            <div class="bottom">
+                <input type="text" placeholder="message" />
+                <button>Send</button>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" integrity="sha384-2huaZvOR9iDzHqslqwpR87isEmrfxqyWOF7hr7BY6KG0+hVKLoEXMPUJw3ynWuhO" crossorigin="anonymous"></script>
+    <script>
+        function appendIncomingMessage(message) {
+            const messages = document.querySelector(".messages");
+            const messageDiv = document.createElement("div");
+            messageDiv.classList.add("message");
+            messageDiv.innerText = message;
+            messages.appendChild(messageDiv);
+            messages.scrollTop = messages.scrollHeight; // Scroll to bottom
+        }
+        
+        function appendOutgoingMessage(message) {
+            const messages = document.querySelector(".messages");
+            const messageDiv = document.createElement("div");
+            messageDiv.classList.add("message", "outgoing-message");
+            messageDiv.innerText = message;
+            messages.appendChild(messageDiv);
+            messages.scrollTop = messages.scrollHeight; // Scroll to bottom
+        }
+
+        const socket = io();
+        let room = null;
+        socket.emit("joinroom");
+        
+        socket.on('roomJoined', roomId => {
+            room = roomId;
+            console.log(room);
+        });
+        
+        document.querySelector("button").addEventListener("click", () => {
+            const input = document.querySelector("input");
+            const message = input.value.trim();
+            if (message) {
+                appendOutgoingMessage(message);
+                input.value = "";
+                socket.emit("message", { message, room });
+            }
+        });
+        
+        socket.on("message", message => {
+            console.log(message);
+            appendIncomingMessage(message);
+        });
+    </script>
+</body>
+
+</html>
